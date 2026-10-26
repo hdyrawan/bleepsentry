@@ -1,3 +1,13 @@
+## 1.1
+
+- Calibration screens no longer prompt "No baseline (press OK)" while a
+  calibration is already running. During Watch or Sweep calibration the
+  line now says what the device is doing, so it cannot invite a key press
+  that would restart the calibration.
+- The RSSI readout and the level bar now share one range (-115 to -25 dBm),
+  so the number can no longer print a value outside the meter's scale with
+  an empty bar underneath it.
+
 ## 1.0
 
 - First catalog-ready release. Screenshots captured on the device running

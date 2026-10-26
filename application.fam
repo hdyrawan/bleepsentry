@@ -8,7 +8,7 @@ App(
     stack_size=2 * 1024,
     sources=["*.c*", "!tests"],
     fap_category="Sub-GHz",
-    fap_version="1.0",
+    fap_version="1.1",
     fap_icon="bleepsentry.png",  # 10x10 1-bit PNG
     fap_description="Passive RF anomaly sentry for red-team recon and TSCM bug sweeps",
     fap_author="hdyrawan",
