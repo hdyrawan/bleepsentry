@@ -77,6 +77,8 @@ typedef struct {
     uint32_t alert_start_timestamp;
     float alert_peak_rssi;
     uint32_t events_logged;
+
+    bool pending_vibro_pulse;
 } BsApp;
 
 static uint32_t bs_now(void) {
@@ -267,6 +269,7 @@ int32_t bleepsentry_app(void* p) {
         app->has_baseline_arr[i] = false;
     }
     app->sweep_dwell_ticks_left = 0;
+    app->pending_vibro_pulse = false;
 
     bs_log_open(app);
 
@@ -341,9 +344,7 @@ int32_t bleepsentry_app(void* p) {
                     if(app->alerting && !was_alerting) {
                         app->alert_start_timestamp = bs_now();
                         app->alert_peak_rssi = rssi;
-                        furi_hal_vibro_on(true);
-                        furi_delay_ms(50);
-                        furi_hal_vibro_on(false);
+                        app->pending_vibro_pulse = true;
                     } else if(app->alerting) {
                         if(rssi > app->alert_peak_rssi) app->alert_peak_rssi = rssi;
                     } else if(!app->alerting && was_alerting) {
@@ -380,8 +381,19 @@ int32_t bleepsentry_app(void* p) {
                 }
             }
 
+            bool do_vibro = app->pending_vibro_pulse;
+            app->pending_vibro_pulse = false;
+
             furi_mutex_release(app->mutex);
             view_port_update(view_port);
+
+            /* Done outside the mutex so a 50ms vibro pulse never stalls the
+             * GUI thread's draw callback, which also waits on this mutex. */
+            if(do_vibro) {
+                furi_hal_vibro_on(true);
+                furi_delay_ms(50);
+                furi_hal_vibro_on(false);
+            }
         }
     }
 

@@ -1,3 +1,10 @@
+## 0.5
+
+- Fixed a concurrency bug found by code review: the alert-onset vibration
+  pulse did a blocking 50ms delay while holding the mutex the GUI thread's
+  draw callback also needs, stalling screen updates on every single alert.
+  Moved the vibro pulse outside the mutex-held section.
+
 ## 0.4
 
 - Extracted pure logic (threshold math, alert state transition, frequency
