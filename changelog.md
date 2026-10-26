@@ -1,3 +1,14 @@
+## 1.0
+
+- First catalog-ready release. Captured real on-device screenshots via the
+  Flipper RPC protocol (128x64 native framebuffer, scaled 4x to 512x256
+  per catalog convention): idle, Watch mode after calibration, Sweep mode
+  calibrating, and Sweep mode actively watching.
+- Switched on-device input testing to the proper RPC input path
+  (`rpc_gui_send_input`) after finding the plain debug CLI's `input send`
+  command doesn't reliably reach a running app; RPC input and a physical
+  button press both confirmed working, including clean app exit.
+
 ## 0.7
 
 - Verified on real hardware (Flipper Zero, official firmware 1.5.1, API

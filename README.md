@@ -35,7 +35,12 @@ Builds clean against SDK API 88.2 on both `dev` and `release` channels (verified
 
 One known, non-defect quirk found during testing: remotely closing the app via a tool's "close current app" RPC request (e.g. re-running `ufbt launch`) returns "has to be closed manually." This is expected for apps built on the plain `ViewPort` pattern (what `ufbt create`'s own boilerplate generates, as this app is) rather than the `ViewDispatcher`/scene framework — only the latter supports a remote-close hook. A real physical Back press is unaffected and works correctly, as verified above.
 
-Remaining before catalog submission: qFlipper screenshots.
+## Screenshots
+
+![Idle, no baseline yet](screenshots/idle.png)
+![Watch mode after calibration](screenshots/watch_calibrated.png)
+![Sweep mode calibrating across frequencies](screenshots/sweep_calibrating.png)
+![Sweep mode actively watching](screenshots/sweeping.png)
 
 ## Running the host-side logic tests
 
