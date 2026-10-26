@@ -1,0 +1,3 @@
+dist/
+.vscode/compile_commands.json
+*.o
