@@ -1,3 +1,4 @@
 dist/
 .vscode/compile_commands.json
 *.o
+tests/test_logic

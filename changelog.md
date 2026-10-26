@@ -1,3 +1,19 @@
+## 0.4
+
+- Extracted pure logic (threshold math, alert state transition, frequency
+  index wrap, CSV line formatting) into `bleepsentry_logic.c/.h`, free of
+  any Flipper SDK dependency, with a host-side unit test suite in `tests/`
+  that runs on a normal machine (no device needed) and is wired into CI.
+  This does NOT substitute for on-device testing of GUI/radio/timing
+  behavior, but it does prove the math and formatting are correct.
+- Explicitly excluded `tests/` from the embedded build via `sources` in
+  `application.fam` -- the default source glob is recursive and was
+  pulling the host test file (and its `<assert.h>`/`<math.h>` includes)
+  into the actual .fap binary. Caught via a clean rebuild, fixed before
+  any hardware testing could have surfaced it.
+- Ran `ufbt lint`/`ufbt format` (clang-format) for the first time; fixed
+  all violations.
+
 ## 0.3
 
 - Added sweep mode: long-press OK calibrates a baseline/threshold across all

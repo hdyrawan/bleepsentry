@@ -24,9 +24,17 @@ Controls:
 
 ## Status
 
-Early development. Core RSSI-threshold alert engine and multi-frequency sweep mode are implemented and build clean against SDK API 88.2 (uFBT, release channel). **Not yet tested on physical hardware** — no Flipper was connected during this development session; on-device behavior (radio timing, RSSI readings, GUI responsiveness) is unverified until that happens.
+Feature-complete for v1: Watch mode, Sweep mode, per-frequency calibration, RSSI-threshold alerting, CSV logging. Builds clean against SDK API 88.2 on both `dev` and `release` channels (verified in CI on every commit). Passes `ufbt lint`. The pure logic (threshold math, alert state transitions, CSV formatting) is unit-tested on the host in `tests/` (also run in CI) — see `tests/test_logic.c`.
 
-Planned next: baseline-diff sweep comparison (pre/post meeting), on-device CSV browsing, icon/screenshots for catalog submission.
+**Not yet tested on physical hardware.** No Flipper was connected during development. The logic unit tests prove the math/formatting are correct; they cannot prove the GUI renders sensibly, the radio timing works, or that RSSI readings behave as expected against a real transmitter. That verification, plus qFlipper screenshots for the catalog listing, is the one remaining step before submission — both require physically connecting a Flipper Zero.
+
+## Running the host-side logic tests
+
+```
+cd tests
+gcc -std=c11 -Wall -Wextra -I.. test_logic.c ../bleepsentry_logic.c -lm -o test_logic
+./test_logic
+```
 
 ## Hardware
 
