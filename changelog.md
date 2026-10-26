@@ -1,9 +1,10 @@
 ## 1.0
 
-- First catalog-ready release. Captured real on-device screenshots via the
-  Flipper RPC protocol (128x64 native framebuffer, scaled 4x to 512x256
-  per catalog convention): idle, Watch mode after calibration, Sweep mode
-  calibrating, and Sweep mode actively watching.
+- First catalog-ready release. Screenshots captured on the device running
+  official firmware 1.5.1 (API 88.2), one frame per UI state: idle, Watch
+  mode after calibration, Sweep mode calibrating, and Sweep mode actively
+  watching. All four are 512x256 two-colour frames in the catalog's
+  screenshot format; capture details are in screenshots/README.md.
 - Switched on-device input testing to the proper RPC input path after
   finding the plain debug CLI's input-send command doesn't reliably reach
   a running app; RPC input and a physical button press both confirmed

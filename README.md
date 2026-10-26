@@ -42,6 +42,8 @@ One known, non-defect quirk found during testing: remotely closing the app via a
 ![Sweep mode calibrating across frequencies](screenshots/sweep_calibrating.png)
 ![Sweep mode actively watching](screenshots/sweeping.png)
 
+All four are 512x256 frames captured from the device (official firmware 1.5.1) in qFlipper's screenshot format: two colours only, black foreground on the Flipper orange page, no editing or extra colours. Per-file details are in [screenshots/README.md](screenshots/README.md).
+
 ## Running the host-side logic tests
 
 ```
