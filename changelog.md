@@ -4,17 +4,17 @@
   Flipper RPC protocol (128x64 native framebuffer, scaled 4x to 512x256
   per catalog convention): idle, Watch mode after calibration, Sweep mode
   calibrating, and Sweep mode actively watching.
-- Switched on-device input testing to the proper RPC input path
-  (`rpc_gui_send_input`) after finding the plain debug CLI's `input send`
-  command doesn't reliably reach a running app; RPC input and a physical
-  button press both confirmed working, including clean app exit.
+- Switched on-device input testing to the proper RPC input path after
+  finding the plain debug CLI's input-send command doesn't reliably reach
+  a running app; RPC input and a physical button press both confirmed
+  working, including clean app exit.
 
 ## 0.7
 
 - Verified on real hardware (Flipper Zero, official firmware 1.5.1, API
   88.2): clean install/launch, Watch-mode calibration, full Sweep-mode
-  cycle across all 4 frequencies, and clean exit via physical Back press
-  -- all confirmed with no crash, via on-device thread/loader inspection.
+  cycle across all 4 frequencies, and clean exit via physical Back press,
+  all confirmed with no crash, via on-device thread/loader inspection.
 - Documented a known non-defect quirk: remote "close current app" RPC
   requests report "has to be closed manually," expected for the plain
   ViewPort app pattern (vs. ViewDispatcher); physical Back press is
@@ -37,18 +37,17 @@
 ## 0.4
 
 - Extracted pure logic (threshold math, alert state transition, frequency
-  index wrap, CSV line formatting) into `bleepsentry_logic.c/.h`, free of
-  any Flipper SDK dependency, with a host-side unit test suite in `tests/`
-  that runs on a normal machine (no device needed) and is wired into CI.
-  This does NOT substitute for on-device testing of GUI/radio/timing
-  behavior, but it does prove the math and formatting are correct.
-- Explicitly excluded `tests/` from the embedded build via `sources` in
-  `application.fam` -- the default source glob is recursive and was
-  pulling the host test file (and its `<assert.h>`/`<math.h>` includes)
-  into the actual .fap binary. Caught via a clean rebuild, fixed before
-  any hardware testing could have surfaced it.
-- Ran `ufbt lint`/`ufbt format` (clang-format) for the first time; fixed
-  all violations.
+  index wrap, CSV line formatting) into a host-testable module, free of
+  any Flipper SDK dependency, with a host-side unit test suite that runs
+  on a normal machine (no device needed) and is wired into CI. This does
+  not substitute for on-device testing of GUI/radio/timing behavior, but
+  it does prove the math and formatting are correct.
+- Explicitly excluded the test suite from the embedded build after
+  finding the default source glob is recursive and was pulling the host
+  test file into the actual app binary. Caught via a clean rebuild, fixed
+  before any hardware testing could have surfaced it.
+- Ran the SDK's linter and formatter for the first time; fixed all
+  violations.
 
 ## 0.3
 
@@ -66,8 +65,8 @@
 - Pivoted from BLE passive scanning to Sub-GHz RF anomaly sentry. The public
   Flipper SDK's BLE stack exposes peripheral/advertiser functions only; there
   is no central/observer scan API available to apps, so the original concept
-  was not buildable. Verified against SDK headers (`bt.h`, `gap.h`,
-  `furi_hal_bt.h`) before pivoting.
+  was not buildable. Verified against the SDK's Bluetooth headers before
+  pivoting.
 - Implemented core RSSI-threshold alert engine: frequency selection (300,
   433.92, 868.35, 915 MHz), baseline calibration, live RSSI bar, vibration
   alert on threshold breach.
@@ -75,4 +74,4 @@
 
 ## 0.1
 
-- Initial scaffold via `ufbt create`.
+- Initial scaffold.
