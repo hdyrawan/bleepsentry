@@ -1,3 +1,14 @@
+## 0.7
+
+- Verified on real hardware (Flipper Zero, official firmware 1.5.1, API
+  88.2): clean install/launch, Watch-mode calibration, full Sweep-mode
+  cycle across all 4 frequencies, and clean exit via physical Back press
+  -- all confirmed with no crash, via on-device thread/loader inspection.
+- Documented a known non-defect quirk: remote "close current app" RPC
+  requests report "has to be closed manually," expected for the plain
+  ViewPort app pattern (vs. ViewDispatcher); physical Back press is
+  unaffected.
+
 ## 0.6
 
 - Fixed stale baseline/threshold display: starting a sweep calibration now

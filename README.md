@@ -24,9 +24,18 @@ Controls:
 
 ## Status
 
-Feature-complete for v1: Watch mode, Sweep mode, per-frequency calibration, RSSI-threshold alerting, CSV logging. Builds clean against SDK API 88.2 on both `dev` and `release` channels (verified in CI on every commit). Passes `ufbt lint`. The pure logic (threshold math, alert state transitions, CSV formatting) is unit-tested on the host in `tests/` (also run in CI) — see `tests/test_logic.c`.
+Feature-complete for v1 and verified on real hardware (Flipper Zero, official firmware 1.5.1, API 88.2):
 
-**Not yet tested on physical hardware.** No Flipper was connected during development. The logic unit tests prove the math/formatting are correct; they cannot prove the GUI renders sensibly, the radio timing works, or that RSSI readings behave as expected against a real transmitter. That verification, plus qFlipper screenshots for the catalog listing, is the one remaining step before submission — both require physically connecting a Flipper Zero.
+- Clean install and launch, no crash
+- Watch-mode calibration runs to completion
+- Sweep mode completes a full calibration + continuous cycle across all 4 frequencies without crashing
+- Clean exit via a physical Back press, confirmed via on-device thread/loader inspection (the app's thread fully tears down, loader returns to the main menu)
+
+Builds clean against SDK API 88.2 on both `dev` and `release` channels (verified in CI on every commit). Passes `ufbt lint`. The pure logic (threshold math, alert state transitions, CSV formatting) is unit-tested on the host in `tests/` (also run in CI) — see `tests/test_logic.c`.
+
+One known, non-defect quirk found during testing: remotely closing the app via a tool's "close current app" RPC request (e.g. re-running `ufbt launch`) returns "has to be closed manually." This is expected for apps built on the plain `ViewPort` pattern (what `ufbt create`'s own boilerplate generates, as this app is) rather than the `ViewDispatcher`/scene framework — only the latter supports a remote-close hook. A real physical Back press is unaffected and works correctly, as verified above.
+
+Remaining before catalog submission: qFlipper screenshots.
 
 ## Running the host-side logic tests
 
