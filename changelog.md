@@ -1,3 +1,14 @@
+## 0.3
+
+- Added sweep mode: long-press OK calibrates a baseline/threshold across all
+  four frequencies in sequence, then continuously cycles through them
+  (dwell-watch), alerting and logging independently per frequency. This is
+  the actual multi-band TSCM sweep workflow; the single-frequency Watch mode
+  (short-press OK) remains for red-team monitoring of one known frequency.
+- Up/Down now preserves any previously-calibrated baseline per frequency
+  instead of discarding it on every switch.
+- Builds clean against SDK API 88.2. Not yet tested on physical hardware.
+
 ## 0.2
 
 - Pivoted from BLE passive scanning to Sub-GHz RF anomaly sentry. The public

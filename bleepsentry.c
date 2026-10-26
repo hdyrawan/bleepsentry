@@ -34,7 +34,11 @@ typedef enum {
     BsModeIdle,
     BsModeScanning,
     BsModeCalibrating,
+    BsModeSweepCalibrating,
+    BsModeSweeping,
 } BsMode;
+
+#define SWEEP_DWELL_MS (BASELINE_SAMPLE_MS / 2)
 
 static const uint32_t frequencies[] = {
     300000000,
@@ -60,6 +64,11 @@ typedef struct {
     uint32_t calib_ticks_left;
     float calib_sum;
     uint32_t calib_count;
+
+    float baselines[FREQ_COUNT];
+    float thresholds[FREQ_COUNT];
+    bool has_baseline_arr[FREQ_COUNT];
+    uint32_t sweep_dwell_ticks_left;
 
     Storage* storage;
     File* log_file;
@@ -178,9 +187,16 @@ static void bs_draw_callback(Canvas* canvas, void* context) {
 
     if(app->mode == BsModeCalibrating) {
         canvas_draw_str(canvas, 2, 63, "Calibrating baseline...");
+    } else if(app->mode == BsModeSweepCalibrating) {
+        snprintf(
+            buf, sizeof(buf), "Sweep calib %u/%u", (unsigned)app->freq_index + 1, FREQ_COUNT);
+        canvas_draw_str(canvas, 2, 63, buf);
     } else if(app->alerting) {
         canvas_set_font(canvas, FontPrimary);
         canvas_draw_str(canvas, 70, 63, "ALERT");
+    } else if(app->mode == BsModeSweeping) {
+        snprintf(buf, sizeof(buf), "Sweeping  Log:%lu", (unsigned long)app->events_logged);
+        canvas_draw_str(canvas, 2, 63, buf);
     } else {
         snprintf(buf, sizeof(buf), "Logged: %lu", (unsigned long)app->events_logged);
         canvas_draw_str(canvas, 2, 63, buf);
@@ -194,6 +210,43 @@ static void bs_start_calibration(BsApp* app) {
     app->calib_ticks_left = BASELINE_SAMPLE_MS / RSSI_POLL_PERIOD_MS;
     app->calib_sum = 0;
     app->calib_count = 0;
+}
+
+/* Close out an in-progress alert (used when leaving a frequency mid-alert
+ * during a sweep, so the event still gets logged with a real duration). */
+static void bs_close_alert_if_active(BsApp* app) {
+    if(app->alerting) {
+        uint32_t end_ts = bs_now();
+        uint32_t duration =
+            end_ts >= app->alert_start_timestamp ? end_ts - app->alert_start_timestamp : 0;
+        bs_log_event(app, duration);
+        app->alerting = false;
+    }
+}
+
+static void bs_sync_scalars_from_array(BsApp* app) {
+    app->baseline = app->baselines[app->freq_index];
+    app->threshold = app->thresholds[app->freq_index];
+    app->has_baseline = app->has_baseline_arr[app->freq_index];
+}
+
+static void bs_start_sweep_calibration(BsApp* app) {
+    bs_close_alert_if_active(app);
+    for(size_t i = 0; i < FREQ_COUNT; i++) app->has_baseline_arr[i] = false;
+    app->freq_index = 0;
+    bs_radio_start(app);
+    app->mode = BsModeSweepCalibrating;
+    app->calib_ticks_left = BASELINE_SAMPLE_MS / RSSI_POLL_PERIOD_MS;
+    app->calib_sum = 0;
+    app->calib_count = 0;
+}
+
+static void bs_sweep_advance(BsApp* app) {
+    bs_close_alert_if_active(app);
+    app->freq_index = (app->freq_index + 1) % FREQ_COUNT;
+    bs_radio_start(app);
+    bs_sync_scalars_from_array(app);
+    app->sweep_dwell_ticks_left = SWEEP_DWELL_MS / RSSI_POLL_PERIOD_MS;
 }
 
 int32_t bleepsentry_app(void* p) {
@@ -210,6 +263,12 @@ int32_t bleepsentry_app(void* p) {
     app->alerting = false;
     app->mode = BsModeIdle;
     app->events_logged = 0;
+    for(size_t i = 0; i < FREQ_COUNT; i++) {
+        app->baselines[i] = RSSI_MIN_DBM;
+        app->thresholds[i] = RSSI_MIN_DBM;
+        app->has_baseline_arr[i] = false;
+    }
+    app->sweep_dwell_ticks_left = 0;
 
     bs_log_open(app);
 
@@ -245,9 +304,41 @@ int32_t bleepsentry_app(void* p) {
                                                             RSSI_MIN_DBM;
                         app->threshold = app->baseline + ALERT_MARGIN_DB;
                         app->has_baseline = true;
+                        app->baselines[app->freq_index] = app->baseline;
+                        app->thresholds[app->freq_index] = app->threshold;
+                        app->has_baseline_arr[app->freq_index] = true;
                         app->mode = BsModeScanning;
                     }
-                } else if(app->mode == BsModeScanning && app->has_baseline) {
+                } else if(app->mode == BsModeSweepCalibrating) {
+                    app->calib_sum += rssi;
+                    app->calib_count++;
+                    if(app->calib_ticks_left > 0) app->calib_ticks_left--;
+                    if(app->calib_ticks_left == 0) {
+                        float base =
+                            app->calib_count ? (app->calib_sum / app->calib_count) :
+                                                RSSI_MIN_DBM;
+                        app->baselines[app->freq_index] = base;
+                        app->thresholds[app->freq_index] = base + ALERT_MARGIN_DB;
+                        app->has_baseline_arr[app->freq_index] = true;
+
+                        if(app->freq_index + 1 < FREQ_COUNT) {
+                            app->freq_index++;
+                            bs_radio_start(app);
+                            app->calib_ticks_left = BASELINE_SAMPLE_MS / RSSI_POLL_PERIOD_MS;
+                            app->calib_sum = 0;
+                            app->calib_count = 0;
+                        } else {
+                            app->freq_index = 0;
+                            bs_radio_start(app);
+                            bs_sync_scalars_from_array(app);
+                            app->sweep_dwell_ticks_left =
+                                SWEEP_DWELL_MS / RSSI_POLL_PERIOD_MS;
+                            app->mode = BsModeSweeping;
+                        }
+                    }
+                } else if(
+                    (app->mode == BsModeScanning || app->mode == BsModeSweeping) &&
+                    app->has_baseline) {
                     bool was_alerting = app->alerting;
                     app->alerting = rssi > app->threshold;
                     if(app->alerting && !was_alerting) {
@@ -266,26 +357,34 @@ int32_t bleepsentry_app(void* p) {
                                 0;
                         bs_log_event(app, duration);
                     }
+
+                    if(app->mode == BsModeSweeping) {
+                        if(app->sweep_dwell_ticks_left > 0) app->sweep_dwell_ticks_left--;
+                        if(app->sweep_dwell_ticks_left == 0) bs_sweep_advance(app);
+                    }
                 }
             } else if(event.type == BsEventTypeInput) {
                 InputEvent* input = &event.input;
-                if(input->type == InputTypeShort || input->type == InputTypeRepeat) {
-                    if(input->key == InputKeyBack) {
-                        running = false;
-                    } else if(input->key == InputKeyOk) {
-                        bs_start_calibration(app);
-                    } else if(input->key == InputKeyUp || input->key == InputKeyRight) {
+                if(input->key == InputKeyBack && input->type == InputTypeShort) {
+                    running = false;
+                } else if(input->key == InputKeyOk && input->type == InputTypeLong) {
+                    bs_start_sweep_calibration(app);
+                } else if(input->key == InputKeyOk && input->type == InputTypeShort) {
+                    bs_start_calibration(app);
+                } else if(
+                    (input->type == InputTypeShort || input->type == InputTypeRepeat) &&
+                    (input->key == InputKeyUp || input->key == InputKeyRight ||
+                     input->key == InputKeyDown || input->key == InputKeyLeft)) {
+                    bs_close_alert_if_active(app);
+                    if(input->key == InputKeyUp || input->key == InputKeyRight) {
                         app->freq_index = (app->freq_index + 1) % FREQ_COUNT;
-                        app->has_baseline = false;
-                        app->alerting = false;
-                        bs_radio_start(app);
-                    } else if(input->key == InputKeyDown || input->key == InputKeyLeft) {
-                        app->freq_index =
-                            (app->freq_index + FREQ_COUNT - 1) % FREQ_COUNT;
-                        app->has_baseline = false;
-                        app->alerting = false;
-                        bs_radio_start(app);
+                    } else {
+                        app->freq_index = (app->freq_index + FREQ_COUNT - 1) % FREQ_COUNT;
                     }
+                    app->mode = BsModeScanning;
+                    bs_sync_scalars_from_array(app);
+                    app->alerting = false;
+                    bs_radio_start(app);
                 }
             }
 
@@ -298,6 +397,7 @@ int32_t bleepsentry_app(void* p) {
     furi_timer_free(app->timer);
 
     bs_radio_stop();
+    bs_close_alert_if_active(app);
     bs_log_close(app);
 
     gui_remove_view_port(gui, view_port);

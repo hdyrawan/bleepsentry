@@ -11,17 +11,22 @@ This project started as a BLE passive-scanning tool. During development I checke
 
 ## How it works
 
-Bleepsentry tunes the CC1101 radio to a selected frequency and polls RSSI continuously. Press OK to sample a short baseline of ambient noise on that frequency; the app then alerts (on-screen + vibration) whenever RSSI rises meaningfully above that baseline — i.e. something started transmitting nearby.
+Two modes, both logging every alert to `/data/log.csv` (timestamp, frequency, baseline, threshold, peak RSSI, duration):
 
-- **Up/Down**: switch between common ISM frequencies (300, 433.92, 868.35, 915 MHz)
-- **OK**: (re-)calibrate baseline on the current frequency
+- **Watch mode** (short-press OK): calibrates a baseline on the *current* frequency only, then continuously monitors just that one frequency. Built for red-team use — watching one known frequency (e.g. a garage/gate remote) for replay-attack-style activity.
+- **Sweep mode** (long-press OK): calibrates a baseline on *every* frequency in sequence, then continuously cycles through all of them, alerting and logging independently per frequency. This is the actual multi-band TSCM bug-sweep workflow.
+
+Controls:
+- **Up/Down**: switch to a specific frequency manually (drops out of Sweep mode; keeps any previously-calibrated baseline for that frequency)
+- **OK (short)**: calibrate + watch the current frequency
+- **OK (long)**: calibrate + sweep all frequencies
 - **Back**: exit
 
 ## Status
 
-Early development. Core RSSI-threshold alert engine is implemented and builds clean against SDK API 88.2 (uFBT, release channel). **Not yet tested on physical hardware** — no Flipper was connected during this development session; on-device behavior (radio timing, RSSI readings, GUI responsiveness) is unverified until that happens.
+Early development. Core RSSI-threshold alert engine and multi-frequency sweep mode are implemented and build clean against SDK API 88.2 (uFBT, release channel). **Not yet tested on physical hardware** — no Flipper was connected during this development session; on-device behavior (radio timing, RSSI readings, GUI responsiveness) is unverified until that happens.
 
-Planned next: session save/baseline-diff sweep logging, CSV export, multi-frequency scan sweep instead of single fixed frequency.
+Planned next: baseline-diff sweep comparison (pre/post meeting), on-device CSV browsing, icon/screenshots for catalog submission.
 
 ## Hardware
 
