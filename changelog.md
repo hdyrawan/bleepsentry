@@ -7,6 +7,8 @@
 - The RSSI readout and the level bar now share one range (-115 to -25 dBm),
   so the number can no longer print a value outside the meter's scale with
   an empty bar underneath it.
+- The status line moved from the last pixel row to one row above it, so
+  descenders no longer sit on the screen edge.
 
 ## 1.0
 
