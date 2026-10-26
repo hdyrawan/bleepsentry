@@ -1,3 +1,10 @@
+## 0.6
+
+- Fixed stale baseline/threshold display: starting a sweep calibration now
+  clears the on-screen baseline/threshold immediately instead of showing
+  numbers left over from a previous manual (Watch mode) calibration while
+  the sweep calibration is still in progress.
+
 ## 0.5
 
 - Fixed a concurrency bug found by code review: the alert-onset vibration

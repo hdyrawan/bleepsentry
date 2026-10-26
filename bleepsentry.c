@@ -234,6 +234,9 @@ static void bs_start_sweep_calibration(BsApp* app) {
     for(size_t i = 0; i < FREQ_COUNT; i++)
         app->has_baseline_arr[i] = false;
     app->freq_index = 0;
+    app->has_baseline = false; /* avoid showing a stale baseline/threshold
+                                   from a previous manual calibration while
+                                   the sweep calibration is in progress */
     bs_radio_start(app);
     app->mode = BsModeSweepCalibrating;
     app->calib_ticks_left = BASELINE_SAMPLE_MS / RSSI_POLL_PERIOD_MS;
