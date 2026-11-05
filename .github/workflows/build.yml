@@ -9,9 +9,10 @@ on:
     #branches: 
     #  - master 
   pull_request:
-  schedule: 
-    # do a build every day
-    - cron: "1 1 * * *"
+  # schedule:
+  #   # disabled 2026-11-05: daily build was running unattended, contributing to
+  #   # Actions storage usage. Re-enable if SDK-compat checks are needed again.
+  #   - cron: "1 1 * * *"
 
 jobs:
   host-logic-tests:
